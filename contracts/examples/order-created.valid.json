@@ -1,0 +1,28 @@
+{
+  "eventId": "4b107bab-d9b3-4dfa-971f-768991a02f97",
+  "eventType": "order.created",
+  "eventVersion": 1,
+  "occurredAt": "2026-07-22T07:30:00Z",
+  "producer": "order-service",
+  "correlationId": "2c29018f-d449-46d7-915a-1e91b892804e",
+  "causationId": null,
+  "aggregateId": "ORD-10001",
+  "payload": {
+    "orderId": "ORD-10001",
+    "customerId": "CUS-501",
+    "currency": "EUR",
+    "totalAmount": 139.97,
+    "items": [
+      {
+        "productId": "PRD-100",
+        "quantity": 2,
+        "unitPrice": 49.99
+      },
+      {
+        "productId": "PRD-205",
+        "quantity": 1,
+        "unitPrice": 39.99
+      }
+    ]
+  }
+}

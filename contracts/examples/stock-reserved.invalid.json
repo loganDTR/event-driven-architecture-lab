@@ -1,0 +1,22 @@
+{
+  "eventId": "590cdf5f-cbd9-48f9-bc37-71af2df96520",
+  "eventType": "stock.reserved",
+  "eventVersion": 1,
+  "occurredAt": "2026-07-22T08:00:05Z",
+  "producer": "inventory-service",
+  "correlationId": "2c29018f-d449-46d7-915a-1e91b892804e",
+  "causationId": "4b107bab-d9b3-4dfa-971f-768991a02f97",
+  "aggregateId": "ORD-10001",
+  "payload": {
+    "reservationId": "RES-80001",
+    "orderId": "ORD-10001",
+    "warehouseId": "WH-ROMA-01",
+    "reservedAt": "2026-07-22T08:00:05Z",
+    "items": [
+      {
+        "productId": "PRD-100",
+        "quantity": -2
+      }
+    ]
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FraudChecked",
+  "description": "Evento emesso dopo la valutazione antifrode di un ordine.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "eventType",
+    "eventVersion",
+    "occurredAt",
+    "producer",
+    "correlationId",
+    "causationId",
+    "aggregateId",
+    "payload"
+  ],
+  "properties": {
+    "eventId": {
+      "$ref": "./common/definitions.schema.json#/$defs/eventId"
+    },
+    "eventType": {
+      "const": "fraud.checked"
+    },
+    "eventVersion": {
+      "const": 1
+    },
+    "occurredAt": {
+      "$ref": "./common/definitions.schema.json#/$defs/timestamp"
+    },
+    "producer": {
+      "$ref": "./common/definitions.schema.json#/$defs/serviceName"
+    },
+    "correlationId": {
+      "$ref": "./common/definitions.schema.json#/$defs/correlationId"
+    },
+    "causationId": {
+      "$ref": "./common/definitions.schema.json#/$defs/causationId"
+    },
+    "aggregateId": {
+      "$ref": "./common/definitions.schema.json#/$defs/aggregateId"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "checkId",
+        "orderId",
+        "decision",
+        "riskScore",
+        "checkedAt",
+        "reasons"
+      ],
+      "properties": {
+        "checkId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "orderId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPROVED",
+            "REJECTED",
+            "REVIEW"
+          ]
+        },
+        "riskScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "checkedAt": {
+          "$ref": "./common/definitions.schema.json#/$defs/timestamp"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

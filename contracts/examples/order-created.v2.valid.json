@@ -1,0 +1,24 @@
+{
+  "eventId": "f955f22e-ec18-45fb-b350-c71d373dfdc3",
+  "eventType": "order.created",
+  "eventVersion": 2,
+  "occurredAt": "2026-07-22T09:30:00Z",
+  "producer": "order-service",
+  "correlationId": "ac70f539-0415-4bd5-8281-780978630130",
+  "causationId": null,
+  "aggregateId": "ORD-20001",
+  "payload": {
+    "orderId": "ORD-20001",
+    "customerId": "CUS-901",
+    "currency": "EUR",
+    "totalAmount": 89.98,
+    "salesChannel": "WEB",
+    "items": [
+      {
+        "productId": "PRD-300",
+        "quantity": 2,
+        "unitPrice": 44.99
+      }
+    ]
+  }
+}

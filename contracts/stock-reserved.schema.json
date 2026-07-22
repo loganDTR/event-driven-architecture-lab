@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StockReserved",
+  "description": "Evento emesso quando lo stock necessario per un ordine viene riservato con successo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "eventType",
+    "eventVersion",
+    "occurredAt",
+    "producer",
+    "correlationId",
+    "causationId",
+    "aggregateId",
+    "payload"
+  ],
+  "properties": {
+    "eventId": {
+      "$ref": "./common/definitions.schema.json#/$defs/eventId"
+    },
+    "eventType": {
+      "const": "stock.reserved"
+    },
+    "eventVersion": {
+      "const": 1
+    },
+    "occurredAt": {
+      "$ref": "./common/definitions.schema.json#/$defs/timestamp"
+    },
+    "producer": {
+      "$ref": "./common/definitions.schema.json#/$defs/serviceName"
+    },
+    "correlationId": {
+      "$ref": "./common/definitions.schema.json#/$defs/correlationId"
+    },
+    "causationId": {
+      "$ref": "./common/definitions.schema.json#/$defs/causationId"
+    },
+    "aggregateId": {
+      "$ref": "./common/definitions.schema.json#/$defs/aggregateId"
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reservationId",
+        "orderId",
+        "warehouseId",
+        "reservedAt",
+        "items"
+      ],
+      "properties": {
+        "reservationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "orderId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "warehouseId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reservedAt": {
+          "$ref": "./common/definitions.schema.json#/$defs/timestamp"
+        },
+        "expiresAt": {
+          "$ref": "./common/definitions.schema.json#/$defs/timestamp"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "productId",
+              "quantity"
+            ],
+            "properties": {
+              "productId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

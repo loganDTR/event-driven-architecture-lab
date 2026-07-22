@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Common Event Definitions",
+  "description": "Definizioni condivise dai contratti evento del laboratorio.",
+  "$defs": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "serviceName": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "correlationId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "causationId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid"
+    },
+    "aggregateId": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

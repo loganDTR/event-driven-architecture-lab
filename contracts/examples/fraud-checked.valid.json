@@ -1,0 +1,21 @@
+{
+  "eventId": "5bc5d969-cc7f-43f5-bf0e-44aec65587cf",
+  "eventType": "fraud.checked",
+  "eventVersion": 1,
+  "occurredAt": "2026-07-22T08:00:08Z",
+  "producer": "fraud-service",
+  "correlationId": "2c29018f-d449-46d7-915a-1e91b892804e",
+  "causationId": "4b107bab-d9b3-4dfa-971f-768991a02f97",
+  "aggregateId": "ORD-10001",
+  "payload": {
+    "checkId": "CHK-70001",
+    "orderId": "ORD-10001",
+    "decision": "APPROVED",
+    "riskScore": 18.5,
+    "checkedAt": "2026-07-22T08:00:08Z",
+    "reasons": [
+      "KNOWN_CUSTOMER",
+      "LOW_ORDER_VALUE"
+    ]
+  }
+}
