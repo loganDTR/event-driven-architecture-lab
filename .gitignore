@@ -1,3 +1,17 @@
 .env
 .idea/
 .vscode/
+
+# java-order-service - nested IntelliJ project with its own local git repo
+# Ignore the nested .git so the parent repo doesn't treat it as a submodule
+java-order-service/.git/
+
+# Maven build output
+java-order-service/target/
+java-order-service/.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ IDEA artefacts
+java-order-service/*.iml
+java-order-service/*.iws
+java-order-service/*.ipr
+
