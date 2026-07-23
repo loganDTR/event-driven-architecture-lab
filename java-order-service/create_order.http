@@ -1,0 +1,25 @@
+### POST CREATE ORDER
+POST http://localhost:8081/api/orders
+Content-Type: application/json
+
+{
+  "orderId": "ORD-1001",
+  "customerId": "CUS-501",
+  "currency": "EUR",
+  "salesChannel": "WEB",
+  "items": [
+    {
+      "productId": "PROD-101",
+      "quantity": 2,
+      "unitPrice": 19.90
+    },
+    {
+      "productId": "PROD-202",
+      "quantity": 1,
+      "unitPrice": 10.50
+    }
+  ],
+  "correlationId": "0ef035ea-e428-437c-8bb2-5df84da91620",
+  "causationId": null
+}
+###

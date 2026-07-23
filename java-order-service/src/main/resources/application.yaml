@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: java-order-service
+
+  kafka:
+      bootstrap-servers:  localhost:19092
+
+      producer:
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+        properties:
+          enable.idempotence: true
+          acks: all
+          spring.json.add.type.headers: false
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+server:
+  port: 8081
+
+event-lab:
+  topics:
+    order-created: orders.created.v1
+    order-cancelled: orders.cancelled.v1
+    payment-requested: payments.requested.v1
