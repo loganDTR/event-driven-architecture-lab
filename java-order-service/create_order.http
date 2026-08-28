@@ -23,3 +23,15 @@ Content-Type: application/json
   "causationId": null
 }
 ###
+
+## POST di controllo degli errori
+POST http://localhost:8081/api/orders
+Content-Type: application/json
+
+{
+  "orderId": "",
+  "customerId": "",
+  "currency": "euro",
+  "items": []
+}
+###

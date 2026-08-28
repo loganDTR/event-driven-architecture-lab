@@ -4,6 +4,7 @@ import it.zengfx.order.application.port.in.CreateOrderCommand;
 import it.zengfx.order.application.port.in.CreateOrderResult;
 import it.zengfx.order.application.port.in.CreateOrderUseCase;
 import it.zengfx.order.application.port.out.PublishOrderCreatedPort;
+import it.zengfx.order.application.port.out.ValidateOrderCreatedPort;
 import it.zengfx.order.domain.event.OrderCreatedEvent;
 import it.zengfx.order.domain.event.OrderCreatedPayload;
 import org.springframework.stereotype.Service;
@@ -17,9 +18,14 @@ import java.util.concurrent.CompletableFuture;
 public class CreateOrderService implements CreateOrderUseCase {
 
     private final PublishOrderCreatedPort eventPublisher;
+    private final ValidateOrderCreatedPort eventValidator;
 
-    public CreateOrderService(PublishOrderCreatedPort eventPublisher) {
+    public CreateOrderService(
+            PublishOrderCreatedPort eventPublisher,
+            ValidateOrderCreatedPort eventValidator
+    ) {
         this.eventPublisher = eventPublisher;
+        this.eventValidator = eventValidator;
     }
 
     @Override
@@ -45,10 +51,13 @@ public class CreateOrderService implements CreateOrderUseCase {
                 payload
         );
 
-        return eventPublisher.publish(event).thenApply(ignored -> new CreateOrderResult(
-                payload.orderId(),
-                event.eventId(),
-                totalAmount
-        ));
+        eventValidator.validate(event);
+
+        return eventPublisher.publish(event)
+                .thenApply(ignored -> new CreateOrderResult(
+                        payload.orderId(),
+                        event.eventId(),
+                        totalAmount
+                ));
     }
 }
