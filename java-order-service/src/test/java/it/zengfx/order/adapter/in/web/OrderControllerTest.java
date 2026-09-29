@@ -1,8 +1,7 @@
 package it.zengfx.order.adapter.in.web;
 
 import it.zengfx.order.adapter.in.web.error.GlobalExceptionHandler;
-
-import it.zengfx.order.adapter.out.kafka.OrderEventPublicationException;
+import it.zengfx.order.application.exception.EventPublicationException;
 import it.zengfx.order.application.port.in.CreateOrderCommand;
 import it.zengfx.order.application.port.in.CreateOrderResult;
 import it.zengfx.order.application.port.in.CreateOrderUseCase;
@@ -188,8 +187,8 @@ class OrderControllerTest {
 
     @Test
     void shouldReturn503WhenEventPublicationFails() throws Exception {
-        OrderEventPublicationException failure =
-                new OrderEventPublicationException(
+        EventPublicationException failure =
+                new EventPublicationException(
                         "Unable to publish OrderCreated event",
                         new RuntimeException("Kafka unavailable")
                 );

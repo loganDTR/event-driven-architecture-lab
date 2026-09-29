@@ -1,5 +1,6 @@
 package it.zengfx.order.adapter.out.kafka;
 
+import it.zengfx.order.application.exception.EventPublicationException;
 import it.zengfx.order.application.port.out.PublishOrderCreatedPort;
 import it.zengfx.order.domain.event.OrderCreatedEvent;
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ public class KafkaOrderCreatedPublisher implements PublishOrderCreatedPort {
                             topic,
                             messageKey,
                             error);
-                    throw new OrderEventPublicationException(
+                    throw new EventPublicationException(
                             "Unable to publish OrderCreated event " + event.eventId() + " to Kafka topic " + topic, error
                     );
                 });

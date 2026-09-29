@@ -1,7 +1,5 @@
 package it.zengfx.order.domain.event;
 
-import it.zengfx.order.domain.model.Order;
-
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;

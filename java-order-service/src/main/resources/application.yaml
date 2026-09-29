@@ -26,5 +26,3 @@ server:
 event-lab:
   topics:
     order-created: orders.created.v1
-    order-cancelled: orders.cancelled.v1
-    payment-requested: payments.requested.v1
