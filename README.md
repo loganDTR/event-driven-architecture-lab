@@ -53,8 +53,8 @@ The producer currently writes **plain JSON** to Kafka. The Schema Registry is av
 | Module | Focus | Status |
 |---|---|---|
 | 01 | Local infrastructure: Redpanda, Console, PostgreSQL | ✅ Available |
-| 02 | Event contracts and local schema validation | ✅ Available on milestone branch |
-| 03 | Spring Boot event producer | ✅ Available on milestone branch |
+| 02 | Event contracts and local schema validation | ✅ Available |
+| 03 | Spring Boot event producer | ✅ Available |
 | 04 | Spring Boot event consumer | 🔜 Planned |
 | 05 | Contract evolution and Schema Registry compatibility governance | 🔜 Planned |
 | 06 | Idempotency, retries and failure handling | 🔜 Planned |
