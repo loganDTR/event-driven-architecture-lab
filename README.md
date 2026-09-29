@@ -1,13 +1,70 @@
-# 01 — Event-Driven Lab Infrastructure
+# Event-Driven Architecture Lab
 
-Local development infrastructure composed of:
+Reference lab for exploring **event-driven and distributed system patterns** with Java, Spring Boot and Kafka-compatible messaging.
 
-- Redpanda: Kafka-compatible broker
-- Redpanda Console: browser UI
+The repository is intentionally structured as a progressive architecture lab rather than a single demo application. Each stage introduces one concern at a time: local infrastructure, event contracts, producers and consumers, schema evolution, resilience, observability and failure scenarios.
+
+> **Current status:** Module 01 — local event-driven infrastructure.
+
+## Goals
+
+- Explore event-driven architecture patterns in a reproducible local environment.
+- Model explicit event contracts and evolve them safely over time.
+- Build Spring Boot producers and consumers around Kafka-compatible messaging.
+- Study service decoupling, asynchronous communication and delivery semantics.
+- Introduce resilience, idempotency and observability incrementally.
+- Experiment with broker and consumer failure scenarios in later modules.
+
+## High-level architecture
+
+```mermaid
+flowchart LR
+    P[Spring Boot Producer] -->|events| K[(Kafka / Redpanda)]
+    K --> C[Spring Boot Consumer]
+    K --> SR[Schema Registry]
+    C --> DB[(PostgreSQL)]
+
+    RP[Redpanda Console] -. observability .-> K
+```
+
+The application components shown above are the target architecture for the lab.  
+At the moment, the repository contains the infrastructure foundation required by the later modules.
+
+## Technology stack
+
+- **Java / Spring Boot** — application services introduced in upcoming modules
+- **Redpanda** — Kafka-compatible event broker
+- **Schema Registry** — event contract management
+- **PostgreSQL** — persistence
+- **Docker Compose** — reproducible local environment
+- **JSON Schema** — planned event contract definition and evolution
+
+## Roadmap
+
+| Module | Focus | Status |
+|---|---|---|
+| 01 | Local infrastructure: Redpanda, Console, PostgreSQL | ✅ Available |
+| 02 | Event contracts and schema compatibility | 🔜 Planned |
+| 03 | Spring Boot event producer | 🔜 Planned |
+| 04 | Spring Boot event consumer | 🔜 Planned |
+| 05 | Contract evolution and backward compatibility | 🔜 Planned |
+| 06 | Idempotency, retries and failure handling | 🔜 Planned |
+| 07 | Metrics, tracing and observability | 🔜 Planned |
+| 08 | Broker failure and consumer rebalancing scenarios | 🔜 Planned |
+
+---
+
+# Module 01 — Local Infrastructure
+
+The current module provides the local development foundation for the lab:
+
+- Redpanda single-broker cluster
+- Redpanda Console
 - PostgreSQL 18
 - Persistent named volumes
 - Health checks
 - Separate internal and host listeners
+- Verification scripts for Kafka and PostgreSQL
 
 ## Requirements
 
@@ -16,7 +73,7 @@ Local development infrastructure composed of:
 
 ## Start
 
-Copy the environment template:
+Copy the environment template.
 
 ### PowerShell
 
@@ -67,8 +124,7 @@ PostgreSQL defaults are read from `.env`.
 ./scripts/verify.sh
 ```
 
-The verification creates `lab.events` with three partitions and queries the
-sample `lab.orders` table.
+The verification creates `lab.events` with three partitions and queries the sample `lab.orders` table.
 
 ## Manual Kafka smoke test
 
@@ -90,8 +146,7 @@ Produce messages in terminal B:
 docker compose exec redpanda rpk topic produce lab.manual
 ```
 
-Enter one JSON object per line, then press `Ctrl+Z` and Enter on Windows, or
-`Ctrl+D` on Linux/WSL:
+Enter one JSON object per line, then press `Ctrl+Z` and Enter on Windows, or `Ctrl+D` on Linux/WSL:
 
 ```json
 {"eventId":"evt-001","type":"OrderCreated","orderId":1}
@@ -123,14 +178,17 @@ Delete containers and all lab data:
 docker compose down -v
 ```
 
-Initialization scripts run only when the PostgreSQL data volume is empty.
+Initialization scripts run only when the PostgreSQL data volume is empty.  
 After changing `postgres/init/001-init.sql`, reset with `docker compose down -v`.
 
 ## Design notes
 
-This first module intentionally uses one Redpanda broker. Replication factor 1
-is correct for this topology; a three-broker cluster will be introduced later
-when testing partition leadership, broker failure and consumer rebalancing.
+This first module intentionally uses one Redpanda broker. Replication factor 1 is correct for this topology.
 
-Do not use these development credentials or this unsecured configuration in
-production.
+A multi-broker cluster is planned for a later module focused on partition leadership, broker failure and consumer rebalancing.
+
+The development credentials and unsecured local configuration in this repository are intended for local experimentation only and must not be reused in production.
+
+## Why this repository exists
+
+The goal of this lab is not to present a production-ready platform. It is a hands-on environment for reasoning about architecture decisions and trade-offs in event-driven systems, with each concern introduced explicitly and incrementally.
