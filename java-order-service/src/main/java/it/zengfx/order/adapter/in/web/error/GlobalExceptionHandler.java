@@ -1,7 +1,7 @@
 package it.zengfx.order.adapter.in.web.error;
 
-import it.zengfx.order.adapter.out.kafka.OrderEventPublicationException;
 import it.zengfx.order.application.exception.EventContractViolationException;
+import it.zengfx.order.application.exception.EventPublicationException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,9 +78,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         );
     }
 
-    @ExceptionHandler(OrderEventPublicationException.class)
+    @ExceptionHandler(EventPublicationException.class)
     public ProblemDetail handleEventPublicationFailure(
-            OrderEventPublicationException exception,
+            EventPublicationException exception,
             HttpServletRequest request
     ) {
         logger.error(
