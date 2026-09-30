@@ -44,6 +44,32 @@ class JsonSchemaOrderCreatedValidatorTest {
     }
 
     @Test
+    void shouldAcceptMessageWithoutOptionalSalesChannel() {
+        Order order = new Order(
+                "ORD-1001",
+                "CUS-501",
+                "EUR",
+                null,
+                List.of(
+                        new OrderItem(
+                                "PROD-101",
+                                1,
+                                new BigDecimal("19.90")
+                        )
+                )
+        );
+
+        var message = mapper.toMessage(
+                order,
+                UUID.randomUUID(),
+                null
+        );
+
+        assertThatCode(() -> validator.validate(message))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     void shouldRejectJsonWithoutRequiredCustomerId() {
         String invalidJson = """
                 {
