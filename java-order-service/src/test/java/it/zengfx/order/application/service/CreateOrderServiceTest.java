@@ -1,20 +1,18 @@
 package it.zengfx.order.application.service;
 
-import it.zengfx.order.application.exception.EventContractViolationException;
 import it.zengfx.order.application.port.in.CreateOrderCommand;
 import it.zengfx.order.application.port.in.CreateOrderResult;
 import it.zengfx.order.application.port.out.PublishOrderCreatedPort;
-import it.zengfx.order.application.port.out.ValidateOrderCreatedPort;
-import it.zengfx.order.domain.event.OrderCreatedEvent;
-import it.zengfx.order.domain.event.OrderItem;
-import it.zengfx.order.domain.event.SalesChannel;
+import it.zengfx.order.application.port.out.PublishOrderCreatedResult;
+import it.zengfx.order.domain.model.Order;
+import it.zengfx.order.domain.model.OrderItem;
+import it.zengfx.order.domain.model.SalesChannel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import static org.mockito.Mockito.doThrow;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,110 +30,76 @@ class CreateOrderServiceTest {
     @Mock
     private PublishOrderCreatedPort eventPublisher;
 
-    @Mock
-    private ValidateOrderCreatedPort eventValidator;
-
     private CreateOrderService service;
 
     @BeforeEach
     void setUp() {
-        service = new CreateOrderService(
-                eventPublisher,
-                eventValidator
-        );
+        service = new CreateOrderService(eventPublisher);
     }
 
     @Test
-    void shouldCreateAndPublishOrderCreatedEvent() {
+    void shouldCreateDomainOrderAndPublishIt() {
         UUID correlationId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
 
-        CreateOrderCommand command = createCommand(
-                correlationId,
-                null
+        CreateOrderCommand command = createCommand(correlationId, null);
+
+        when(eventPublisher.publish(
+                any(Order.class),
+                eq(correlationId),
+                isNull()
+        )).thenReturn(
+                CompletableFuture.completedFuture(
+                        new PublishOrderCreatedResult(eventId)
+                )
         );
 
-        when(eventPublisher.publish(any(OrderCreatedEvent.class)))
-                .thenReturn(CompletableFuture.completedFuture(null));
+        CreateOrderResult result = service.createOrder(command).join();
 
-        CreateOrderResult result = service
-                .createOrder(command)
-                .join();
+        ArgumentCaptor<Order> orderCaptor =
+                ArgumentCaptor.forClass(Order.class);
+
+        verify(eventPublisher).publish(
+                orderCaptor.capture(),
+                eq(correlationId),
+                isNull()
+        );
+
+        Order order = orderCaptor.getValue();
+
+        assertThat(order.orderId()).isEqualTo("ORD-1001");
+        assertThat(order.customerId()).isEqualTo("CUS-501");
+        assertThat(order.currency()).isEqualTo("EUR");
+        assertThat(order.salesChannel()).isEqualTo(SalesChannel.WEB);
+        assertThat(order.items()).hasSize(2);
+        assertThat(order.totalAmount()).isEqualByComparingTo("50.30");
 
         assertThat(result.orderId()).isEqualTo("ORD-1001");
-        assertThat(result.eventId()).isNotNull();
-        assertThat(result.totalAmount())
-                .isEqualByComparingTo("50.30");
-
-        ArgumentCaptor<OrderCreatedEvent> eventCaptor =
-                ArgumentCaptor.forClass(OrderCreatedEvent.class);
-
-        verify(eventPublisher, times(1))
-                .publish(eventCaptor.capture());
-
-        OrderCreatedEvent publishedEvent = eventCaptor.getValue();
-
-        assertThat(publishedEvent.eventId())
-                .isEqualTo(result.eventId());
-
-        assertThat(publishedEvent.eventType())
-                .isEqualTo("order.created");
-
-        assertThat(publishedEvent.eventVersion())
-                .isEqualTo(2);
-
-        assertThat(publishedEvent.producer())
-                .isEqualTo("java-order-service");
-
-        assertThat(publishedEvent.correlationId())
-                .isEqualTo(correlationId);
-
-        assertThat(publishedEvent.causationId())
-                .isNull();
-
-        assertThat(publishedEvent.aggregateId())
-                .isEqualTo("ORD-1001");
-
-        assertThat(publishedEvent.payload().orderId())
-                .isEqualTo("ORD-1001");
-
-        assertThat(publishedEvent.payload().customerId())
-                .isEqualTo("CUS-501");
-
-        assertThat(publishedEvent.payload().currency())
-                .isEqualTo("EUR");
-
-        assertThat(publishedEvent.payload().salesChannel())
-                .isEqualTo(SalesChannel.WEB);
-
-        assertThat(publishedEvent.payload().totalAmount())
-                .isEqualByComparingTo("50.30");
-
-        assertThat(publishedEvent.payload().items())
-                .hasSize(2);
-
-        verifyNoMoreInteractions(eventPublisher);
+        assertThat(result.eventId()).isEqualTo(eventId);
+        assertThat(result.totalAmount()).isEqualByComparingTo("50.30");
     }
 
     @Test
     void shouldGenerateCorrelationIdWhenMissing() {
-        CreateOrderCommand command = createCommand(
-                null,
-                null
+        UUID eventId = UUID.randomUUID();
+
+        when(eventPublisher.publish(
+                any(Order.class),
+                any(UUID.class),
+                isNull()
+        )).thenReturn(
+                CompletableFuture.completedFuture(
+                        new PublishOrderCreatedResult(eventId)
+                )
         );
 
-        when(eventPublisher.publish(any(OrderCreatedEvent.class)))
-                .thenReturn(CompletableFuture.completedFuture(null));
+        service.createOrder(createCommand(null, null)).join();
 
-        service.createOrder(command).join();
-
-        ArgumentCaptor<OrderCreatedEvent> eventCaptor =
-                ArgumentCaptor.forClass(OrderCreatedEvent.class);
-        verify(eventValidator)
-                .validate(any(OrderCreatedEvent.class));
-        verify(eventPublisher).publish(eventCaptor.capture());
-
-        assertThat(eventCaptor.getValue().correlationId())
-                .isNotNull();
+        verify(eventPublisher).publish(
+                any(Order.class),
+                any(UUID.class),
+                isNull()
+        );
     }
 
     @Test
@@ -143,110 +107,75 @@ class CreateOrderServiceTest {
         UUID correlationId = UUID.randomUUID();
         UUID causationId = UUID.randomUUID();
 
-        CreateOrderCommand command = createCommand(
-                correlationId,
-                causationId
+        when(eventPublisher.publish(
+                any(Order.class),
+                eq(correlationId),
+                eq(causationId)
+        )).thenReturn(
+                CompletableFuture.completedFuture(
+                        new PublishOrderCreatedResult(UUID.randomUUID())
+                )
         );
 
-        when(eventPublisher.publish(any(OrderCreatedEvent.class)))
-                .thenReturn(CompletableFuture.completedFuture(null));
+        service.createOrder(
+                createCommand(correlationId, causationId)
+        ).join();
 
-        service.createOrder(command).join();
-
-        ArgumentCaptor<OrderCreatedEvent> eventCaptor =
-                ArgumentCaptor.forClass(OrderCreatedEvent.class);
-        verify(eventValidator)
-                .validate(any(OrderCreatedEvent.class));
-        verify(eventPublisher).publish(eventCaptor.capture());
-
-        OrderCreatedEvent event = eventCaptor.getValue();
-
-        assertThat(event.correlationId())
-                .isEqualTo(correlationId);
-
-        assertThat(event.causationId())
-                .isEqualTo(causationId);
+        verify(eventPublisher).publish(
+                any(Order.class),
+                eq(correlationId),
+                eq(causationId)
+        );
     }
 
     @Test
     void shouldPropagatePublicationFailure() {
-        CreateOrderCommand command = createCommand(
-                UUID.randomUUID(),
-                null
-        );
-
         RuntimeException publicationFailure =
                 new RuntimeException("Kafka unavailable");
 
-        when(eventPublisher.publish(any(OrderCreatedEvent.class)))
-                .thenReturn(CompletableFuture.failedFuture(
-                        publicationFailure
-                ));
+        when(eventPublisher.publish(
+                any(Order.class),
+                any(UUID.class),
+                isNull()
+        )).thenReturn(
+                CompletableFuture.failedFuture(publicationFailure)
+        );
 
         CompletableFuture<CreateOrderResult> future =
-                service.createOrder(command);
+                service.createOrder(
+                        createCommand(UUID.randomUUID(), null)
+                );
 
         assertThatThrownBy(future::join)
                 .isInstanceOf(CompletionException.class)
                 .hasCause(publicationFailure);
-        verify(eventValidator)
-                .validate(any(OrderCreatedEvent.class));
-        verify(eventPublisher).publish(any(OrderCreatedEvent.class));
-    }
-
-    @Test
-    void shouldNotPublishWhenContractValidationFails() {
-        CreateOrderCommand command = createCommand(
-                UUID.randomUUID(),
-                null
-        );
-
-        EventContractViolationException failure =
-                new EventContractViolationException(
-                        "OrderCreated event violates JSON Schema V2",
-                        List.of("/payload/customerId: required property missing")
-                );
-
-        doThrow(failure)
-                .when(eventValidator)
-                .validate(any(OrderCreatedEvent.class));
-
-        assertThatThrownBy(() -> service.createOrder(command))
-                .isSameAs(failure);
-
-        verify(eventValidator)
-                .validate(any(OrderCreatedEvent.class));
-
-        verifyNoInteractions(eventPublisher);
     }
 
     @Test
     void shouldCompleteOnlyAfterPublisherCompletes() {
-        CreateOrderCommand command = createCommand(
-                UUID.randomUUID(),
-                null
-        );
-
-        CompletableFuture<Void> publicationFuture =
+        UUID eventId = UUID.randomUUID();
+        CompletableFuture<PublishOrderCreatedResult> publicationFuture =
                 new CompletableFuture<>();
 
-        when(eventPublisher.publish(any(OrderCreatedEvent.class)))
-                .thenReturn(publicationFuture);
+        when(eventPublisher.publish(
+                any(Order.class),
+                any(UUID.class),
+                isNull()
+        )).thenReturn(publicationFuture);
 
         CompletableFuture<CreateOrderResult> resultFuture =
-                service.createOrder(command);
+                service.createOrder(
+                        createCommand(UUID.randomUUID(), null)
+                );
 
         assertThat(resultFuture).isNotDone();
 
-        publicationFuture.complete(null);
+        publicationFuture.complete(
+                new PublishOrderCreatedResult(eventId)
+        );
 
         assertThat(resultFuture).isCompleted();
-
-        CreateOrderResult result = resultFuture.join();
-
-        assertThat(result.orderId()).isEqualTo("ORD-1001");
-        assertThat(result.totalAmount())
-                .isEqualByComparingTo("50.30");
+        assertThat(resultFuture.join().eventId()).isEqualTo(eventId);
     }
 
     @Test
@@ -258,7 +187,7 @@ class CreateOrderServiceTest {
         verifyNoInteractions(eventPublisher);
     }
 
-    private CreateOrderCommand createCommand(
+    private static CreateOrderCommand createCommand(
             UUID correlationId,
             UUID causationId
     ) {
