@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: java-order-consumer
+  datasource:
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:eventlab}
+    username: ${POSTGRES_USER:eventlab}
+    password: ${POSTGRES_PASSWORD:eventlab_dev_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: lab
