@@ -29,11 +29,13 @@ public class OrderCreatedKafkaListener {
     public void onMessage(String payload) {
         Objects.requireNonNull(payload, "payload cannot be null");
 
+        OrderCreatedMessage message;
         try {
-            OrderCreatedMessage message = objectMapper.readValue(payload, OrderCreatedMessage.class);
-            useCase.handle(mapper.toDomain(message));
+            message = objectMapper.readValue(payload, OrderCreatedMessage.class);
         } catch (Exception exception) {
-            throw new IllegalArgumentException("Unable to consume OrderCreated event", exception);
+            throw new IllegalArgumentException("Unable to deserialize OrderCreated event", exception);
         }
+
+        useCase.handle(mapper.toDomain(message));
     }
 }
