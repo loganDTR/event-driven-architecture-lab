@@ -38,6 +38,14 @@ public record Order(
         }
         items = List.copyOf(items);
 
+        BigDecimal calculatedTotal = items.stream()
+                .map(item -> item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (calculatedTotal.compareTo(totalAmount) != 0) {
+            throw new IllegalArgumentException("totalAmount must match the sum of order items");
+        }
+
         Objects.requireNonNull(status, "status cannot be null");
         Objects.requireNonNull(createdAt, "createdAt cannot be null");
     }
