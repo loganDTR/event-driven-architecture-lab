@@ -1,16 +1,31 @@
 spring:
   application:
     name: java-order-consumer
+
   datasource:
     url: jdbc:postgresql://localhost:5432/${POSTGRES_DB:eventlab}
     username: ${POSTGRES_USER:eventlab}
     password: ${POSTGRES_PASSWORD:eventlab_dev_password}
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
         default_schema: lab
+
+  kafka:
+    bootstrap-servers: localhost:19092
+    consumer:
+      group-id: java-order-consumer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+event-lab:
+  topics:
+    order-created: orders.created.v1
