@@ -211,7 +211,7 @@ The producer is implemented in:
 java-order-service/
 ```
 
-It follows a lightweight hexagonal structure:
+It follows a hexagonal structure with the integration contract isolated in the outbound Kafka adapter:
 
 ```text
 adapter.in.web
@@ -222,16 +222,21 @@ application.port.in
       v
 application.service
       |
-      +--> application.port.out.ValidateOrderCreatedPort
-      |           |
-      |           v
-      |     adapter.out.validation
+      v
+domain.model.Order
       |
-      +--> application.port.out.PublishOrderCreatedPort
-                  |
-                  v
-            adapter.out.kafka
+      v
+application.port.out.PublishOrderCreatedPort
+      |
+      v
+adapter.out.kafka
+      |
+      +--> OrderCreatedMessageMapper
+      +--> JSON Schema V2 validation
+      +--> Kafka publisher
 ```
+
+The application core does not know the Kafka event envelope, event version, producer name, JSON Schema or Kafka record key. Those concerns belong to the outbound adapter.
 
 ## Producer flow
 
@@ -240,14 +245,16 @@ POST /api/orders
   -> Bean Validation
   -> OrderWebMapper
   -> CreateOrderService
-  -> calculate totalAmount
-  -> build OrderCreatedEvent V2
-  -> validate against JSON Schema V2
+  -> build domain Order
+  -> calculate totalAmount from Order items
+  -> PublishOrderCreatedPort
   -> KafkaOrderCreatedPublisher
-  -> orders.created.v1
+  -> map domain Order to OrderCreatedMessage V2
+  -> validate against JSON Schema V2
+  -> publish to orders.created.v1
 ```
 
-The Kafka record key is the order aggregate id:
+The Kafka record key is defined by the outbound adapter from the integration message:
 
 ```text
 key = aggregateId = orderId
