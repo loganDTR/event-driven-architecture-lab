@@ -3,7 +3,7 @@ package it.zengfx.order.adapter.in.web;
 import it.zengfx.order.adapter.in.web.error.InvalidRequestDataException;
 import it.zengfx.order.application.port.in.CreateOrderCommand;
 import it.zengfx.order.application.port.in.CreateOrderResult;
-import it.zengfx.order.domain.event.OrderItem;
+import it.zengfx.order.domain.model.OrderItem;
 import org.springframework.stereotype.Component;
 
 @Component
