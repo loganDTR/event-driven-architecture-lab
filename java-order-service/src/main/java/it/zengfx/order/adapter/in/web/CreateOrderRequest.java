@@ -1,6 +1,6 @@
 package it.zengfx.order.adapter.in.web;
 
-import it.zengfx.order.domain.event.SalesChannel;
+import it.zengfx.order.domain.model.SalesChannel;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;

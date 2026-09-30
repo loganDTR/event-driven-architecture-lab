@@ -1,10 +1,10 @@
 package it.zengfx.order.adapter.out.kafka;
 
+import it.zengfx.order.adapter.out.kafka.message.OrderCreatedMessage;
 import it.zengfx.order.application.port.out.PublishOrderCreatedPort;
-import it.zengfx.order.domain.event.OrderCreatedEvent;
-import it.zengfx.order.domain.event.OrderCreatedPayload;
-import it.zengfx.order.domain.event.OrderItem;
-import it.zengfx.order.domain.event.SalesChannel;
+import it.zengfx.order.domain.model.Order;
+import it.zengfx.order.domain.model.OrderItem;
+import it.zengfx.order.domain.model.SalesChannel;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -68,48 +68,43 @@ class KafkaPartitioningAndOrderingIntegrationTest {
 
     @Test
     void shouldUseSamePartitionAndPreserveOrderForSameAggregateId() {
-        OrderCreatedEvent firstEvent = createEvent(
-                "ORD-1001",
-                "CUS-501",
-                "10.00"
-        );
+        UUID correlationId = UUID.randomUUID();
 
-        OrderCreatedEvent secondEvent = createEvent(
-                "ORD-1001",
-                "CUS-501",
-                "20.00"
-        );
+        var firstPublication = publisher.publish(
+                order("ORD-1001", "CUS-501", "10.00"),
+                correlationId,
+                null
+        ).join();
 
-        OrderCreatedEvent differentOrderEvent = createEvent(
-                "ORD-2001",
-                "CUS-777",
-                "30.00"
-        );
+        var secondPublication = publisher.publish(
+                order("ORD-1001", "CUS-501", "20.00"),
+                correlationId,
+                null
+        ).join();
 
-        publisher.publish(firstEvent).join();
-        publisher.publish(secondEvent).join();
-        publisher.publish(differentOrderEvent).join();
+        var differentPublication = publisher.publish(
+                order("ORD-2001", "CUS-777", "30.00"),
+                correlationId,
+                null
+        ).join();
 
         Set<UUID> expectedEventIds = Set.of(
-                firstEvent.eventId(),
-                secondEvent.eventId(),
-                differentOrderEvent.eventId()
+                firstPublication.eventId(),
+                secondPublication.eventId(),
+                differentPublication.eventId()
         );
 
-        List<ConsumerRecord<String, OrderCreatedEvent>> records =
+        List<ConsumerRecord<String, OrderCreatedMessage>> records =
                 consumeExpectedRecords(expectedEventIds);
 
-        ConsumerRecord<String, OrderCreatedEvent> firstRecord =
-                findByEventId(records, firstEvent.eventId());
+        ConsumerRecord<String, OrderCreatedMessage> firstRecord =
+                findByEventId(records, firstPublication.eventId());
 
-        ConsumerRecord<String, OrderCreatedEvent> secondRecord =
-                findByEventId(records, secondEvent.eventId());
+        ConsumerRecord<String, OrderCreatedMessage> secondRecord =
+                findByEventId(records, secondPublication.eventId());
 
-        ConsumerRecord<String, OrderCreatedEvent> differentRecord =
-                findByEventId(
-                        records,
-                        differentOrderEvent.eventId()
-                );
+        ConsumerRecord<String, OrderCreatedMessage> differentRecord =
+                findByEventId(records, differentPublication.eventId());
 
         assertThat(firstRecord.key()).isEqualTo("ORD-1001");
         assertThat(secondRecord.key()).isEqualTo("ORD-1001");
@@ -124,7 +119,7 @@ class KafkaPartitioningAndOrderingIntegrationTest {
                 .isLessThan(secondRecord.offset());
     }
 
-    private List<ConsumerRecord<String, OrderCreatedEvent>>
+    private List<ConsumerRecord<String, OrderCreatedMessage>>
     consumeExpectedRecords(Set<UUID> expectedEventIds) {
 
         Map<String, Object> properties = Map.of(
@@ -138,18 +133,18 @@ class KafkaPartitioningAndOrderingIntegrationTest {
                 false
         );
 
-        JacksonJsonDeserializer<OrderCreatedEvent> valueDeserializer =
-                new JacksonJsonDeserializer<>(OrderCreatedEvent.class);
+        JacksonJsonDeserializer<OrderCreatedMessage> valueDeserializer =
+                new JacksonJsonDeserializer<>(OrderCreatedMessage.class);
 
         valueDeserializer.setUseTypeHeaders(false);
         valueDeserializer.addTrustedPackages(
-                "it.zengfx.order.domain.event"
+                "it.zengfx.order.adapter.out.kafka.message"
         );
 
-        List<ConsumerRecord<String, OrderCreatedEvent>> received =
+        List<ConsumerRecord<String, OrderCreatedMessage>> received =
                 new ArrayList<>();
 
-        try (KafkaConsumer<String, OrderCreatedEvent> consumer =
+        try (KafkaConsumer<String, OrderCreatedMessage> consumer =
                      new KafkaConsumer<>(
                              properties,
                              new StringDeserializer(),
@@ -184,7 +179,7 @@ class KafkaPartitioningAndOrderingIntegrationTest {
     }
 
     private boolean containsAllExpectedEvents(
-            List<ConsumerRecord<String, OrderCreatedEvent>> records,
+            List<ConsumerRecord<String, OrderCreatedMessage>> records,
             Set<UUID> expectedEventIds
     ) {
         Set<UUID> receivedEventIds = records.stream()
@@ -194,8 +189,8 @@ class KafkaPartitioningAndOrderingIntegrationTest {
         return receivedEventIds.containsAll(expectedEventIds);
     }
 
-    private ConsumerRecord<String, OrderCreatedEvent> findByEventId(
-            List<ConsumerRecord<String, OrderCreatedEvent>> records,
+    private ConsumerRecord<String, OrderCreatedMessage> findByEventId(
+            List<ConsumerRecord<String, OrderCreatedMessage>> records,
             UUID eventId
     ) {
         return records.stream()
@@ -208,18 +203,17 @@ class KafkaPartitioningAndOrderingIntegrationTest {
                 ));
     }
 
-    private OrderCreatedEvent createEvent(
+    private static Order order(
             String orderId,
             String customerId,
             String totalAmount
     ) {
         BigDecimal amount = new BigDecimal(totalAmount);
 
-        OrderCreatedPayload payload = new OrderCreatedPayload(
+        return new Order(
                 orderId,
                 customerId,
                 "EUR",
-                amount,
                 SalesChannel.WEB,
                 List.of(
                         new OrderItem(
@@ -228,12 +222,6 @@ class KafkaPartitioningAndOrderingIntegrationTest {
                                 amount
                         )
                 )
-        );
-
-        return OrderCreatedEvent.create(
-                UUID.randomUUID(),
-                null,
-                payload
         );
     }
 }

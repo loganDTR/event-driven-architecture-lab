@@ -1,10 +1,10 @@
 package it.zengfx.order.adapter.out.kafka;
 
+import it.zengfx.order.adapter.out.kafka.message.OrderCreatedMessage;
 import it.zengfx.order.application.port.out.PublishOrderCreatedPort;
-import it.zengfx.order.domain.event.OrderCreatedEvent;
-import it.zengfx.order.domain.event.OrderCreatedPayload;
-import it.zengfx.order.domain.event.OrderItem;
-import it.zengfx.order.domain.event.SalesChannel;
+import it.zengfx.order.domain.model.Order;
+import it.zengfx.order.domain.model.OrderItem;
+import it.zengfx.order.domain.model.SalesChannel;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -63,74 +63,36 @@ class KafkaOrderCreatedPublisherIntegrationTest {
     }
 
     @Test
-    void shouldPublishOrderCreatedEventWithExpectedKeyAndPayload() {
+    void shouldPublishOrderCreatedMessageWithExpectedKeyAndPayload() {
         UUID correlationId = UUID.randomUUID();
 
-        OrderCreatedPayload payload = new OrderCreatedPayload(
-                "ORD-IT-1001",
-                "CUS-501",
-                "EUR",
-                new BigDecimal("50.30"),
-                SalesChannel.WEB,
-                List.of(
-                        new OrderItem(
-                                "PROD-101",
-                                2,
-                                new BigDecimal("19.90")
-                        ),
-                        new OrderItem(
-                                "PROD-202",
-                                1,
-                                new BigDecimal("10.50")
-                        )
-                )
-        );
-
-        OrderCreatedEvent event = OrderCreatedEvent.create(
+        var publication = publisher.publish(
+                order("ORD-IT-1001", "CUS-501", "50.30"),
                 correlationId,
-                null,
-                payload
-        );
+                null
+        ).join();
 
-        publisher.publish(event).join();
-
-        ConsumerRecord<String, OrderCreatedEvent> record =
+        ConsumerRecord<String, OrderCreatedMessage> record =
                 consumeSingleRecord();
 
         assertThat(record.topic()).isEqualTo(TOPIC);
         assertThat(record.key()).isEqualTo("ORD-IT-1001");
 
-        OrderCreatedEvent consumedEvent = record.value();
+        OrderCreatedMessage message = record.value();
 
-        assertThat(consumedEvent.eventId())
-                .isEqualTo(event.eventId());
-
-        assertThat(consumedEvent.eventType())
-                .isEqualTo("order.created");
-
-        assertThat(consumedEvent.eventVersion())
-                .isEqualTo(2);
-
-        assertThat(consumedEvent.producer())
-                .isEqualTo("java-order-service");
-
-        assertThat(consumedEvent.correlationId())
-                .isEqualTo(correlationId);
-
-        assertThat(consumedEvent.aggregateId())
-                .isEqualTo("ORD-IT-1001");
-
-        assertThat(consumedEvent.payload().orderId())
-                .isEqualTo("ORD-IT-1001");
-
-        assertThat(consumedEvent.payload().totalAmount())
+        assertThat(message.eventId()).isEqualTo(publication.eventId());
+        assertThat(message.eventType()).isEqualTo("order.created");
+        assertThat(message.eventVersion()).isEqualTo(2);
+        assertThat(message.producer()).isEqualTo("java-order-service");
+        assertThat(message.correlationId()).isEqualTo(correlationId);
+        assertThat(message.aggregateId()).isEqualTo("ORD-IT-1001");
+        assertThat(message.payload().orderId()).isEqualTo("ORD-IT-1001");
+        assertThat(message.payload().totalAmount())
                 .isEqualByComparingTo("50.30");
-
-        assertThat(consumedEvent.payload().items())
-                .hasSize(2);
+        assertThat(message.payload().items()).hasSize(1);
     }
 
-    private ConsumerRecord<String, OrderCreatedEvent> consumeSingleRecord() {
+    private ConsumerRecord<String, OrderCreatedMessage> consumeSingleRecord() {
         Map<String, Object> properties = Map.of(
                 ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 kafka.getBootstrapServers(),
@@ -142,15 +104,15 @@ class KafkaOrderCreatedPublisherIntegrationTest {
                 false
         );
 
-        JacksonJsonDeserializer<OrderCreatedEvent> valueDeserializer =
-                new JacksonJsonDeserializer<>(OrderCreatedEvent.class);
+        JacksonJsonDeserializer<OrderCreatedMessage> valueDeserializer =
+                new JacksonJsonDeserializer<>(OrderCreatedMessage.class);
 
         valueDeserializer.setUseTypeHeaders(false);
         valueDeserializer.addTrustedPackages(
-                "it.zengfx.order.domain.event"
+                "it.zengfx.order.adapter.out.kafka.message"
         );
 
-        try (KafkaConsumer<String, OrderCreatedEvent> consumer =
+        try (KafkaConsumer<String, OrderCreatedMessage> consumer =
                      new KafkaConsumer<>(
                              properties,
                              new StringDeserializer(),
@@ -173,6 +135,22 @@ class KafkaOrderCreatedPublisherIntegrationTest {
 
         throw new AssertionError(
                 "No record received from topic " + TOPIC
+        );
+    }
+
+    private static Order order(
+            String orderId,
+            String customerId,
+            String amount
+    ) {
+        BigDecimal total = new BigDecimal(amount);
+
+        return new Order(
+                orderId,
+                customerId,
+                "EUR",
+                SalesChannel.WEB,
+                List.of(new OrderItem("PROD-TEST", 1, total))
         );
     }
 }

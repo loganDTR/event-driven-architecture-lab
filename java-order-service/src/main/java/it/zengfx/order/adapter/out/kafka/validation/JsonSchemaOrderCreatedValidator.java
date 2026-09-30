@@ -1,12 +1,11 @@
-package it.zengfx.order.adapter.out.validation;
+package it.zengfx.order.adapter.out.kafka.validation;
 
 import com.networknt.schema.InputFormat;
 import com.networknt.schema.Schema;
 import com.networknt.schema.SchemaRegistry;
 import com.networknt.schema.SpecificationVersion;
+import it.zengfx.order.adapter.out.kafka.message.OrderCreatedMessage;
 import it.zengfx.order.application.exception.EventContractViolationException;
-import it.zengfx.order.application.port.out.ValidateOrderCreatedPort;
-import it.zengfx.order.domain.event.OrderCreatedEvent;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
@@ -17,8 +16,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Component
-public class JsonSchemaOrderCreatedValidator
-        implements ValidateOrderCreatedPort {
+public class JsonSchemaOrderCreatedValidator {
 
     private static final String SCHEMA_PATH =
             "contracts/order-created/v2.schema.json";
@@ -33,21 +31,20 @@ public class JsonSchemaOrderCreatedValidator
         this.schema = loadSchema();
     }
 
-    @Override
-    public void validate(OrderCreatedEvent event) {
+    public void validate(OrderCreatedMessage message) {
         Objects.requireNonNull(
-                event,
-                "OrderCreatedEvent must not be null"
+                message,
+                "OrderCreatedMessage must not be null"
         );
 
         try {
-            String json = objectMapper.writeValueAsString(event);
+            String json = objectMapper.writeValueAsString(message);
             validateJson(json);
         } catch (EventContractViolationException exception) {
             throw exception;
         } catch (Exception exception) {
             throw new EventContractViolationException(
-                    "Unable to serialize OrderCreated event for validation",
+                    "Unable to serialize OrderCreated message for validation",
                     exception
             );
         }
