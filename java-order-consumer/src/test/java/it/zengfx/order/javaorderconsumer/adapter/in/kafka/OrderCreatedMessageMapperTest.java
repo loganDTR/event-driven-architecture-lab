@@ -47,6 +47,39 @@ class OrderCreatedMessageMapperTest {
     }
 
     @Test
+    void rejectsTotalAmountDifferentFromItemsSum() {
+        OrderCreatedMessage validMessage = message(
+                "ORD-1001",
+                "ORD-1001",
+                2,
+                Instant.parse("2026-09-30T12:00:00Z")
+        );
+
+        var invalidPayload = new OrderCreatedPayloadMessage(
+                validMessage.payload().orderId(),
+                validMessage.payload().customerId(),
+                validMessage.payload().currency(),
+                new BigDecimal("99.99"),
+                validMessage.payload().salesChannel(),
+                validMessage.payload().items()
+        );
+
+        var invalidMessage = new OrderCreatedMessage(
+                validMessage.eventId(),
+                validMessage.eventType(),
+                validMessage.eventVersion(),
+                validMessage.occurredAt(),
+                validMessage.producer(),
+                validMessage.correlationId(),
+                validMessage.causationId(),
+                validMessage.aggregateId(),
+                invalidPayload
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> mapper.toDomain(invalidMessage));
+    }
+
+    @Test
     void rejectsAggregateIdDifferentFromOrderId() {
         OrderCreatedMessage message = message(
                 "OTHER-ORDER",
