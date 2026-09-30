@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 @Entity
 @Table(name = "orders", schema = "lab")
@@ -15,6 +16,7 @@ import java.time.OffsetDateTime;
 @Setter
 @NoArgsConstructor
 public class OrderEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,18 +40,13 @@ public class OrderEntity {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-
-
     @PrePersist
     void onCreate() {
-        OffsetDateTime now = OffsetDateTime.now();
-        createdAt = now;
-        updatedAt = now;
+        updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
     }
 
     @PreUpdate
     void onUpdate() {
-        updatedAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now(ZoneOffset.UTC);
     }
-
 }
