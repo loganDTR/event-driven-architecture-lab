@@ -1,6 +1,6 @@
 package it.zengfx.order.adapter.out.kafka;
 
-import it.zengfx.order.adapter.out.validation.JsonSchemaOrderCreatedValidator;
+import it.zengfx.order.adapter.out.kafka.validation.JsonSchemaOrderCreatedValidator;
 import it.zengfx.order.application.exception.EventPublicationException;
 import it.zengfx.order.application.port.out.PublishOrderCreatedPort;
 import it.zengfx.order.application.port.out.PublishOrderCreatedResult;
