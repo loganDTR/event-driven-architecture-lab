@@ -2,7 +2,7 @@ name: event-driven-lab
 
 services:
   redpanda:
-    image: docker.redpanda.com/redpandadata/redpanda:${REDPANDA_VERSION:-v26.1.13}
+    image: docker.io/redpandadata/redpanda:${REDPANDA_VERSION:-v26.1.13}
     container_name: eventlab-redpanda
     command:
       - redpanda
@@ -35,7 +35,7 @@ services:
     restart: unless-stopped
 
   console:
-    image: docker.redpanda.com/redpandadata/console:${REDPANDA_CONSOLE_VERSION:-v3.8.0}
+    image: docker.io/redpandadata/console:${REDPANDA_CONSOLE_VERSION:-v3.8.0}
     container_name: eventlab-console
     entrypoint: /bin/sh
     command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml && /app/console'
